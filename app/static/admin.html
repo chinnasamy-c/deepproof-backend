@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DeepProof Admin</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--line:#2a3a53;--text:#edf4ff;--muted:#9eb0c8;--blue:#9acbff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}.wrap{max-width:900px;margin:auto;padding:28px 18px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center}a{color:var(--blue)}h1{margin:0}p{color:var(--muted)}.panel{margin-top:20px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:16px}.form{display:flex;gap:8px;flex-wrap:wrap}input{flex:1;min-width:210px;background:#091321;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px}button{background:#cce4ff;color:#10243b;border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.stat{border:1px solid var(--line);border-radius:12px;padding:15px;background:#0d1829}.stat b{display:block;font-size:25px}.stat span{font-size:12px;color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c6d7eb;background:#091321;padding:12px;border-radius:10px}@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body><div class="wrap">
+<div class="top"><div><h1>DeepProof Admin</h1><p>Runtime metrics · Protected API</p></div><a href="/">← Back to verifier</a></div>
+<section class="panel">
+<h2>Admin authentication</h2><p>Enter the ADMIN_TOKEN configured on the server. The token is held only in this page's memory and sent in the request header.</p>
+<div class="form"><input id="token" type="password" autocomplete="off" placeholder="Admin token"><button id="load">Load metrics</button></div>
+<p id="message" role="status"></p>
+<div id="dashboard" hidden>
+<div class="grid" id="cards"></div>
+<h3>System details</h3><pre id="details"></pre>
+</div></section>
+<p>Metrics are temporary in-memory counters and reset when the service restarts. They are not a durable audit log.</p>
+</div>
+<script>
+const token=document.getElementById('token'), message=document.getElementById('message'), dashboard=document.getElementById('dashboard');
+document.getElementById('load').addEventListener('click',async()=>{
+ message.textContent='Loading…';dashboard.hidden=true;
+ try{
+  const r=await fetch('/api/admin/stats',{headers:{'X-Admin-Token':token.value}});
+  const data=await r.json();
+  if(!r.ok)throw new Error(data.detail||'Request failed');
+  const labels=[['files_received','Files received'],['files_with_signatures','Files with signatures'],['valid_results','Passed configured checks'],['not_valid_or_untrusted_results','Need review'],['errors','Processing errors'],['batches','Batches']];
+  const cards=document.getElementById('cards');cards.replaceChildren();
+  labels.forEach(([key,label])=>{const d=document.createElement('div');d.className='stat';const b=document.createElement('b');b.textContent=data[key]??0;const s=document.createElement('span');s.textContent=label;d.append(b,s);cards.append(d)});
+  document.getElementById('details').textContent=JSON.stringify({started_at:data.started_at,max_file_mb:data.max_file_mb,max_batch_files:data.max_batch_files,trust_roots_configured:data.trust_roots_configured,note:data.note},null,2);
+  dashboard.hidden=false;message.textContent='Metrics loaded.';
+ }catch(e){message.textContent='Unable to load metrics: '+e.message}
+});
+</script></body></html>

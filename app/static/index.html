@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Check PDF digital signatures and export batch reports.">
+  <title>DeepProof — PDF Signature Verification</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--panel2:#18263b;--line:#2a3a53;--text:#edf4ff;--muted:#9eb0c8;--blue:#7cb8ff;--green:#75d6a0;--red:#ff9b9b;--amber:#ffd58a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142744 0,#0b1220 48%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+    .wrap{max-width:1100px;margin:auto;padding:28px 18px 60px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+    .brand{display:flex;align-items:center;gap:12px}.logo{width:46px;height:46px;border-radius:14px;background:#dcecff;color:#12263f;display:grid;place-items:center;font-size:23px;font-weight:900}
+    h1{font-size:24px;line-height:1.15;margin:0}.sub{color:var(--muted);font-size:13px}.tag{border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted);font-size:12px}
+    .hero{margin:20px 0 24px}.hero h2{font-size:clamp(27px,5vw,43px);line-height:1.08;letter-spacing:-1.1px;margin:0 0 12px;max-width:700px}.hero p{color:var(--muted);max-width:700px;margin:0}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel{background:rgba(18,29,48,.92);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 45px #0002}
+    h3{font-size:17px;margin:0 0 5px}.hint{font-size:13px;color:var(--muted);margin:0 0 18px}
+    .drop{border:1.5px dashed #49617f;background:#0d1829;border-radius:16px;padding:30px 16px;text-align:center;cursor:pointer;transition:.2s}.drop:hover,.drop.drag{border-color:var(--blue);background:#12233b}
+    .drop .symbol{font-size:30px}.drop strong{display:block;margin:7px 0}.drop small{color:var(--muted)}input[type=file]{display:none}
+    .btns{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:650}.btn.primary{background:#cce4ff;color:#10243b;border-color:#cce4ff}.btn:disabled{opacity:.45;cursor:not-allowed}
+    .filelist{margin-top:14px;display:grid;gap:7px}.file{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.stat{background:#0d1829;border:1px solid var(--line);border-radius:12px;padding:12px}.stat b{display:block;font-size:22px}.stat span{color:var(--muted);font-size:12px}
+    .notice{font-size:12px;color:var(--muted);border-left:3px solid var(--amber);padding:9px 12px;background:#251f16;border-radius:0 8px 8px 0;margin-top:16px}
+    .results{margin-top:20px}.result{border:1px solid var(--line);background:#0d1829;border-radius:13px;padding:14px;margin-top:10px}.resulthead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.filename{font-weight:700;overflow-wrap:anywhere}.pill{font-size:11px;font-weight:800;letter-spacing:.3px;border-radius:999px;padding:4px 8px;white-space:nowrap}.VALID{color:var(--green);background:#153527}.NOT_SIGNED{color:var(--amber);background:#382d18}.NOT_VALID_OR_UNTRUSTED,.INDETERMINATE{color:var(--amber);background:#382d18}.ERROR{color:var(--red);background:#3b2025}.message{color:var(--muted);font-size:13px;margin-top:7px}.details{margin-top:8px}.details summary{cursor:pointer;color:var(--blue);font-size:13px}.details pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#bdcbe0;font-size:12px;background:#08111e;padding:10px;border-radius:8px;max-height:260px;overflow:auto}
+    .foot{margin-top:25px;color:var(--muted);font-size:12px;text-align:center}.hidden{display:none!important}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.tag{display:none}.panel{padding:17px}.stats{grid-template-columns:repeat(3,1fr)}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="logo">✓</div><div><h1>DeepProof</h1><div class="sub">PDF SIGNATURE INTELLIGENCE</div></div></div>
+    <div class="tag">SECURE PROCESSING · BATCH REPORTS</div>
+  </header>
+  <section class="hero">
+    <h2>Know what your PDF signature actually proves.</h2>
+    <p>Validate embedded PDF digital signatures, review detailed results, and export a report for every batch.</p>
+  </section>
+  <div class="grid">
+    <section class="panel">
+      <h3>Verify documents</h3>
+      <p class="hint">Choose PDF files. Maximum 25 files per batch; each file is limited to 15 MB by default.</p>
+      <div id="drop" class="drop" role="button" tabindex="0" aria-label="Choose PDF files">
+        <div class="symbol">⇧</div><strong>Drop PDF files here</strong><small>or click to browse · PDF only</small>
+      </div>
+      <input id="files" type="file" accept="application/pdf,.pdf" multiple>
+      <div id="filelist" class="filelist"></div>
+      <div class="btns">
+        <button id="verify" class="btn primary" disabled>Verify PDFs</button>
+        <button id="clear" class="btn" disabled>Clear</button>
+      </div>
+      <div id="progress" class="hint" style="margin:12px 0 0"></div>
+      <div class="notice">Privacy by design: this starter processes uploads in memory and does not intentionally save the uploaded PDF files. Do not upload sensitive documents to a public demo until you have reviewed and tested the deployment.</div>
+    </section>
+    <aside class="panel">
+      <h3>Batch overview</h3>
+      <p class="hint">Live results for your current batch.</p>
+      <div class="stats">
+        <div class="stat"><b id="count">0</b><span>Files checked</span></div>
+        <div class="stat"><b id="valid">0</b><span>Passed checks</span></div>
+        <div class="stat"><b id="review">0</b><span>Need review</span></div>
+      </div>
+      <div class="btns">
+        <button id="csv" class="btn" disabled>Export CSV</button>
+        <button id="zip" class="btn" disabled>Download ZIP</button>
+      </div>
+      <div class="notice">“Not valid or untrusted” is deliberately cautious: it may mean a failed signature, an untrusted certificate, missing trust roots, or an inconclusive check. Read the detailed report.</div>
+      <div style="margin-top:18px">
+        <h3>Validation stages</h3>
+        <p class="hint" style="margin-bottom:8px">01 · PDF parsing</p>
+        <p class="hint" style="margin-bottom:8px">02 · Signature verification</p>
+        <p class="hint" style="margin-bottom:8px">03 · Configured certificate trust</p>
+        <p class="hint" style="margin-bottom:0">04 · Human-readable report</p>
+      </div>
+    </aside>
+  </div>
+  <section id="resultsSection" class="panel results hidden">
+    <h3>Verification results</h3><p class="hint">Expand signature details for the validator's diagnostic output.</p>
+    <div id="results"></div>
+  </section>
+  <footer class="foot">DeepProof · Independent starter project · Not an official government service or certificate authority.</footer>
+</div>
+<script>
+(() => {
+  const input = document.getElementById('files');
+  const drop = document.getElementById('drop');
+  const filelist = document.getElementById('filelist');
+  const verifyBtn = document.getElementById('verify');
+  const clearBtn = document.getElementById('clear');
+  const csvBtn = document.getElementById('csv');
+  const zipBtn = document.getElementById('zip');
+  const progress = document.getElementById('progress');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultsNode = document.getElementById('results');
+  let selected = [];
+  let results = [];
+
+  function setFiles(files) {
+    selected = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.pdf')).slice(0, 25);
+    results = [];
+    renderFiles();
+    renderResults();
+    progress.textContent = '';
+    updateStats();
+  }
+  function renderFiles() {
+    filelist.innerHTML = '';
+    selected.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'file';
+      const name = document.createElement('span'); name.textContent = f.name;
+      const size = document.createElement('span'); size.textContent = (f.size / 1024 / 1024).toFixed(2) + ' MB';
+      row.append(name, size); filelist.append(row);
+    });
+    verifyBtn.disabled = !selected.length;
+    clearBtn.disabled = !selected.length && !results.length;
+  }
+  function updateStats() {
+    document.getElementById('count').textContent = results.length;
+    document.getElementById('valid').textContent = results.filter(r => r.status === 'VALID').length;
+    document.getElementById('review').textContent = results.filter(r => r.status !== 'VALID').length;
+    csvBtn.disabled = zipBtn.disabled = !results.length;
+  }
+  function renderResults() {
+    resultsNode.innerHTML = '';
+    resultsSection.classList.toggle('hidden', !results.length);
+    results.forEach(r => {
+      const card = document.createElement('article'); card.className = 'result';
+      const head = document.createElement('div'); head.className = 'resulthead';
+      const filename = document.createElement('div'); filename.className = 'filename'; filename.textContent = r.filename;
+      const pill = document.createElement('span'); pill.className = 'pill ' + r.status; pill.textContent = r.status.replaceAll('_', ' ');
+      head.append(filename, pill);
+      const message = document.createElement('div'); message.className = 'message'; message.textContent = `${r.message} Signatures found: ${r.signature_count}.`;
+      card.append(head, message);
+      (r.signatures || []).forEach(s => {
+        const details = document.createElement('details'); details.className = 'details';
+        const summary = document.createElement('summary'); summary.textContent = `Signature ${s.signature_number}: ${s.status}`;
+        const pre = document.createElement('pre'); pre.textContent = s.details || 'No additional details.';
+        details.append(summary, pre); card.append(details);
+      });
+      resultsNode.append(card);
+    });
+    updateStats();
+  }
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+  input.addEventListener('change', () => setFiles(input.files));
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop', e => setFiles(e.dataTransfer.files));
+  clearBtn.addEventListener('click', () => { selected = []; results = []; input.value = ''; renderFiles(); renderResults(); progress.textContent = ''; });
+  verifyBtn.addEventListener('click', async () => {
+    if (!selected.length) return;
+    verifyBtn.disabled = true; clearBtn.disabled = true; progress.textContent = 'Validating files…';
+    const form = new FormData(); selected.forEach(f => form.append('files', f));
+    try {
+      const response = await fetch('/api/validate', {method:'POST', body:form});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Validation request failed.');
+      results = data.results || [];
+      renderResults();
+      progress.textContent = `Completed ${results.length} file(s). Batch ID: ${data.batch_id}`;
+    } catch (err) {
+      progress.textContent = 'Error: ' + err.message;
+    } finally { verifyBtn.disabled = !selected.length; clearBtn.disabled = !selected.length && !results.length; }
+  });
+  async function downloadExport(endpoint, filename) {
+    const response = await fetch(endpoint, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({results})});
+    if (!response.ok) { progress.textContent = 'Could not create export.'; return; }
+    const blob = await response.blob(); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  csvBtn.addEventListener('click', () => downloadExport('/api/export/csv','deepproof-report.csv'));
+  zipBtn.addEventListener('click', () => downloadExport('/api/export/zip','deepproof-reports.zip'));
+})();
+</script>
+</body>
+</html>
